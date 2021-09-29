@@ -1,3 +1,11 @@
+/*
+Add these:
+<script src="https://threejs.org/build/three.js"></script>
+body {
+  margin: 0;
+}
+*/
+
 // initialize
 let renderer, scene, camera, draw, counter = 0;
 function init(){
