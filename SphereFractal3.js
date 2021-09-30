@@ -21,9 +21,9 @@ function animate(){
 	requestAnimationFrame(animate);
   counter++;
   draw();
+  renderer.render(scene, camera);
 }
 init();
-animate();
 
 
 
@@ -31,31 +31,20 @@ animate();
 let color, frac;
 const TAU = 6.283185307179586;
 
-let n = 2, c = 0;
+var n = 5,
+    d = 2,
+    c = 0,
+    t = 0;
 
-for(let i = 0; i < n; i++){
-	c += Math.pow(n, i);
+for(let i = 1; i <= d + 1; i++){
+	t += Math.pow(n, i);
 }
-
-function init(){
-	// renderer stuff
-	renderer = new THREE.WebGLRenderer();
-  renderer.setPixelRatio( window.devicePixelRatio );
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
   
-  // scene stuff
-  scene = new THREE.Scene();
-  
-  // camera stuff
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 500);
-  camera.position.set(0, 0, 100);
-  
-  // set up object
- 	color = function(r, g, b){
+// set up object
+color = function(r, g, b){
   	return (r << 16) | (g << 8) | b;
   }
-  frac = function(x, y, r, m, d, n, i, scene){
+frac = function(x, y, r, m, d, n, i, scene, positions){
   	let rot = counter / 50.0;
     //let rot = 5.730;
     let a = ((2 * r) / (1 + m)) * (1 + m * (1 + Math.sin(rot * 2)) / 2), x1, y1;
@@ -63,55 +52,44 @@ function init(){
     	x1 = x + Math.cos(d * rot + (k * TAU) / n) * (-r + a / 2);
       y1 = y + Math.sin(d * rot + (k * TAU) / n) * (-r + a / 2);
       
-      const geometry = new THREE.SphereGeometry(a, 32, 16);
-      const material = new THREE.MeshStandardMaterial({color: color(255 * i, 255 - 255 * i , 255 * i), roughness: 0.25});
-      const circle = new THREE.Mesh(geometry, material);
-      
-      circle.position.copy(new THREE.Vector3(x1, y1, 50 - 5 * i));
-      
-      /*c++;
-      if(positions.length){
-      	//positions[c] = 
+      if(positions.length < t){
+        const geometry = new THREE.SphereGeometry(a, 20, 10);
+        const material = new THREE.MeshStandardMaterial({color: color(255 * i, 255 - 255 * i , 255 * i), roughness: 0.25});
+        const circle = new THREE.Mesh(geometry, material);
+
+        circle.position.copy(new THREE.Vector3(x1, y1, 50 - 10 * i));
+
+        scene.add(circle);
+      	positions.push(circle);
       }
-      else{*/
-      	scene.add(circle);
-        //positions.push(new THREE.Vector3(x, y, 50));
-      //}
+      else{
+      	positions[c].position.copy(new THREE.Vector3(x1, y1, 50 - 10 * i));
+        c++;
+      }
+        
       if(i > 0){
-        frac(x1, y1, a / 2, m, -d * d, n, i - 1, scene);
+        frac(x1, y1, a / 2, m, -d * d, n, i - 1, scene, positions);
       }
     }
 	}
   
-  //var positions = [], c = 0;
+var positions = [];
+
+frac(0, 0, 10, 2.5, 1.25, n, d, scene, positions);
+c = 0;
   
-  frac(0, 0, 10, 2.5, 1.25, 5, 1, scene);
-  
-  const l = new THREE.AmbientLight(0x404040);
-	scene.add(l);
-  
-  const dl = new THREE.DirectionalLight(0xffffff, 0.5);
-  dl.position.set(1, 1, 1);
-	scene.add(dl);
-  
-  renderer.render(scene, camera);
-  
+const l = new THREE.AmbientLight(0x404040);
+scene.add(l);
+
+const dl = new THREE.DirectionalLight(0xffffff, 0.5);
+dl.position.set(1, 1, 1);
+scene.add(dl);
+
 draw = function(){
-  	scene.clear();
     
-    camera.position.set(0, 0, 100);
-    
-    const l = new THREE.AmbientLight(0x404040);
-		scene.add(l);
-  
-  	const dl = new THREE.DirectionalLight(0xffffff, 0.5);
-  	dl.position.set(1, 1, 1);
-		scene.add(dl);
-    
-    frac(0, 0, 10, 2.5, 1.25, 5, 1, scene);
-    
-    renderer.render(scene, camera);
+    frac(0, 0, 10, 2.5, 1.25, n, d, scene, positions);
+    c = 0;
   	
-  }
-  
 }
+
+animate();
