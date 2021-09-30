@@ -30,7 +30,7 @@ let color, frac;
 const TAU = 6.283185307179586;
 
 var n = 5,
-    d = 3,
+    d = 2,
     c = 0,
     t = 0;
 
