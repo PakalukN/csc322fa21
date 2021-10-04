@@ -1,14 +1,14 @@
 /*
- Variables are declared in
- advance to simplify things.
- */
+Variables are declared in
+advance to simplify things.
+*/
 let renderer, scene, camera, draw, counter = 0;
 
 /*
- I use init() as a way to get the basics out of the way.
- The code in the function is absolutely necessary for any
- THREE.js program in some form.
- */
+I use init() as a way to get the basics out of the way.
+The code in the function is absolutely necessary for any
+THREE.js program in some form.
+*/
 function init(){
  	renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -19,15 +19,15 @@ function init(){
   camera.position.set(0, 0, 100);
 }
 
- /*
- This function, when called, is executed over
- and over in an infinite loop in order to
- produce an effect of animation. It is usually
- executed around 60 times per second. I use
- animate() to increase the frame count and
- execute the draw() function, in which I put
- everything I want to change.
- */
+/*
+This function, when called, is executed over
+and over in an infinite loop in order to
+produce an effect of animation. It is usually
+executed around 60 times per second. I use
+animate() to increase the frame count and
+execute the draw() function, in which I put
+everything I want to change.
+*/
 function animate(){
  	requestAnimationFrame(animate);
   counter++;
@@ -35,9 +35,9 @@ function animate(){
   renderer.render(scene, camera); // render the scene
 }
 
- /*
- Call init() to actually execute the basic stuff.
- */
+/*
+Call init() to actually execute the basic stuff.
+*/
 init();
 
 /*
@@ -240,16 +240,7 @@ for(let i = 0; i < vertices.length; i++){
   scene.add(t);
 }
 
-/*
-Create an ambient light source
-that is a soft white.
-*/
-//const l = new THREE.AmbientLight(0x101010);
-//scene.add(l);
-
-/*
-Disco
-*/
+/* Disco */
 for(let i = 0; i < 50; i++){
 	const l = 100 * Math.random() + 25;
 	const a = (255 * Math.random());
@@ -269,17 +260,18 @@ for(let i = 0; i < monument.length; i++){
 	monument[i].position.set(0, -255, 0);
 	monument[i].applyMatrix4(new THREE.Matrix4().makeScale(0.13, 0.13, 0.13));
 }
+
+/*
+Rotate the monument by applying a
+rotation matrix to each face.
+*/
 draw = function(){
- 	/*
-   Rotate the monument by applying a
-   rotation matrix to each face.
-   */
   for(let i = 0; i < monument.length; i++){
   	monument[i].applyMatrix4(new THREE.Matrix4().makeRotationY(0.02));
   }
 }
 
- /*
- Call the animate() function.
- */
+/*
+Call the animate() function.
+*/
 animate();
