@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    	<meta charset = "utf-8">
+    	<title>
+            4D Julia Fractal
+        </title>
+    	<style type = "text/css">
+    		body {
+    			margin: 0;
+                background-color: #000;
+    		}
+    	</style>
+    </head>
+    <body>
+    	<canvas id = "output" width = "500" height = "500">
+            Your browser does not support HTML5
+        </canvas>
+    	<script type = "shader-vertex" id = "vertex">
+    		attribute vec2 a_position;
+    		void main () {
+    			gl_Position = vec4(a_position.xy, 0.0, 1.0);
+    		}
+    	</script>
+    	<script type = "shader-fragment" id = "fragment">
+    		precision mediump float;
+    	    uniform float time;
+    	    uniform vec2 scale;
+            float pi = 3.14159;
+    	    vec3 cameraPosition = 1.8 * vec3(cos(time), 0, sin(time));
+            float ct = cos(time + pi / 2.0), st = sin(time + pi / 2.0);
+    	    mat3 cameraMatrix = mat3(ct, 0, -st,
+                                     0 , 1, 0 ,
+                                     st, 0, ct);
+    	    vec4 offset = vec4(cos(time), sin(time), cos(time * 2.0 + pi), sin(time * 1.61 + pi)) * 0.6;
+    	    void iterate (inout vec4 a) {
+    	    	a = vec4(a.x * a.x - a.y * a.y - a.z * a.z - a.w * a.w,
+                         2.0 * a.x * a.y, 2.0 * a.x * a.z, 2.0 * a.x * a.w);
+    	    }
+    		vec2 map (vec3 pos) {
+    			vec4 z = vec4(pos.xyz, 0.0);
+    			float md2 = 1.0;
+    			float radius2 = dot(z, z);
+    			float m = 0.0;
+    			for (int i = 0; i < 50; i ++) {
+    				iterate(z);
+    				z += offset;
+    				md2 *= 4.0 * radius2;
+    				radius2 = dot(z, z);
+    				m += 1.0;
+    				if (radius2 > 4.0) break;
+    			}
+    			return vec2(0.25 * sqrt(radius2 / md2) * log(radius2) - 0.001, m);
+    		}
+    	    vec3 xDir = vec3(0.000001, 0, 0);
+    	    vec3 yDir = vec3(0, 0.000001, 0);
+    	    vec3 zDir = vec3(0, 0, 0.000001);
+    	    vec3 surfaceNormal (vec3 pos) {
+    	    	vec3 normal = vec3(
+    	    		map(pos + xDir).x - map(pos - xDir).x,
+    	    		map(pos + yDir).x - map(pos - yDir).x,
+    	    		map(pos + zDir).x - map(pos - zDir).x
+    	    	);
+    	    	return normalize(normal);
+    	    }
+    	    vec3 lightDirection = vec3(cos(time + pi), 0.0, sin(time + pi));
+    	    float hue = time / 20.0;
+    	    vec3 trace (vec3 origin, vec3 direction) {
+    			float totalDistance = 0.0;
+                float m = 0.0;
+    			for (float steps = 0.0; steps < 100.0; steps ++) {
+    				vec3 pos = origin + direction * totalDistance;
+    				vec2 pinfo = map(pos);
+    				float distance = pinfo.x;
+    				totalDistance += distance;
+    				if (dot(pos, pos) > 5.0) {
+                        m = steps;
+                        break;
+                    }
+    				if (distance < 0.0001) {
+    					vec3 normal = surfaceNormal(pos);
+    					float diffuse = max(-dot(normal, lightDirection), 0.0);
+    					float specular = -dot(reflect(direction, normal), lightDirection);
+    					specular = max(pow(specular, 5.0), 0.0);
+    					float shade = diffuse * 0.7 + specular * 0.3;
+    					float h = sin(pinfo.y) + 0.5;
+    					vec3 tint = vec3(
+                            cos(h * pi * 2.0 + 4.0 * pi / 3.0) + 1.0,
+                            cos(h * pi * 2.0) + 1.0,
+                            cos(h * pi * 2.0 + 2.0 * pi / 3.0) + 1.0) / 2.0;
+    					return shade * tint;
+    				}
+    			}
+    			return vec3(m / 100.0);
+    	    }
+    	    void main () {
+    	        gl_FragColor = vec4(trace(cameraPosition, vec3(1.0 - scale * gl_FragCoord.xy, 1.0) * cameraMatrix), 1.0);
+    	    }
+    	</script>
+    	<script type = "text/javascript">
+    		var program, canvas, gl, ctx;
+    		function getel(id) {
+    			return document.getElementById(id);
+    		}
+            canvas = getel("output");
+            var args = {
+                preserveDrawingBuffer: true,
+                failIfMajorPerformanceCaveat: true
+            };
+            gl = canvas.getContext("webgl", args) || canvas.getContext("experimental-webgl", args);
+            gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            var triBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, triBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1]), gl.STATIC_DRAW);
+            var vs = gl.createShader(gl.VERTEX_SHADER);
+            var fs = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(vs, getel("vertex").text);
+            gl.shaderSource(fs, getel("fragment").text);
+            gl.compileShader(fs);
+            gl.compileShader(vs);
+            program = gl.createProgram();
+            gl.attachShader(program, vs);
+            gl.attachShader(program, fs);
+            gl.linkProgram(program);
+            gl.useProgram(program);
+            var positionLocation = gl.getAttribLocation(program, "a_position");
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+            var loc = gl.getUniformLocation(program, "scale");
+            gl["uniform2f"](loc, 2.0 / gl.drawingBufferWidth, 2.0 / gl.drawingBufferHeight);
+            loc = gl.getUniformLocation(program, "time");
+            var time = 0.0, fps = 60, rate = 1000 / fps;
+    		function draw() {
+                gl["uniform1f"](loc, time / 2000);
+    			gl.drawArrays(gl.TRIANGLES, 0, 6);
+    			time += rate;
+    			window.setTimeout(function() {	window.requestAnimationFrame(draw);}, rate);
+    		}
+    		window.addEventListener("load", draw, false);
+    	</script>
+    </body>
+</html>
